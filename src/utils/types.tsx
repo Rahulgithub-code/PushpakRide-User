@@ -22,3 +22,7 @@ interface CustomTextProps {
     numberOfLines?: number;
 }
 
+export type {
+    CustomButtonProps, CustomTextProps, PhoneInputProps
+};
+
