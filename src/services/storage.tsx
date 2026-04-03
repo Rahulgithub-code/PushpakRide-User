@@ -1,24 +1,22 @@
-import { MMKV } from 'react-native-mmkv';
+import * as SecureStore from 'expo-secure-store';
 
-export const tokenStorage = new MMKV({
-    id: 'token-storage',
-    encryptionKey: 'pushpak-ride-secure-key',
-});
+const KEYS = ['rider-store', 'user-store', 'auth_token'];
 
-export const storage = new MMKV({
-    id: 'user-storage',
-    encryptionKey: 'pushpak-ride-secure-key',
-});
+export const zustandStorage = {
+  getItem: async (name: string) => {
+    const value = await SecureStore.getItemAsync(name);
+    return value ?? null;
+  },
 
-export const mmkvStorage =  {
-    setItem: (key: string, value: string) => {
-        storage.set(key, value);
-    },
-    getItem: (key: string) => {
-        const value = storage.getString(key);
-        return value ?? null;
-    },
-    removeItem: (key: string) => {        
-        storage.delete(key);
-    }
+  setItem: async (name: string, value: string) => {
+    await SecureStore.setItemAsync(name, value);
+  },
+
+  removeItem: async (name: string) => {
+    await SecureStore.deleteItemAsync(name);
+  },
+  
+  clearAll: async () => {
+    await Promise.all(KEYS.map((key) => SecureStore.deleteItemAsync(key)));
+  },
 };

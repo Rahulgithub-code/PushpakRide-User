@@ -1,42 +1,46 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { mmkvStorage } from './storage';
-import { UserStoreProps } from './userStore';
+import { zustandStorage } from './storage';
 
 type CustomLocation = {
-    latitude: number;
-    longitude: number;
-    address: string;
-    heading: number;
+  latitude: number;
+  longitude: number;
+  address: string;
+  heading: number;
 } | null;
 
 export interface RiderStoreProps {
-    user: any;
-    location: CustomLocation;
-    outOfRange: boolean;
-    setUser: (user: any) => void;
-    setLocation: (location: CustomLocation) => void;
-    setOutOfRange: (outOfRange: boolean) => void;
-    clearData: () => void;
+  user: any;
+  location: CustomLocation;
+  onDuty: boolean;
+  setUser: (user: any) => void;
+  setLocation: (location: CustomLocation) => void;
+  setOnDuty: (onDuty: boolean) => void;
+  clearRiderData: () => void;
 }
 
 export const useRiderStore = create<RiderStoreProps>()(
-    persist(
-        (set) => ({
-            user: null,
-            location: null,
-            onDuty: false,
-            setUser: (data: any) => set({ data }),
-            setLocation: (location: CustomLocation) => set({ location }),
-            setOnDuty: (data: boolean) => set({ data }),
-            clearData: () => set({ user: null, location: null, onDuty: false }),
-        }),
-        {
-            name: 'rider-store',
-            partialize: (state: any) => ({ 
-                user: state.user 
-            }),
-            storage: createJSONStorage(() => mmkvStorage),
-        }
-    )
+  persist(
+    (set) => ({
+      user: null,
+      location: null,
+      onDuty: false,
+
+      setUser: (user: any) => set({ user }),
+      setLocation: (location: CustomLocation) => set({ location }),
+      setOnDuty: (onDuty: boolean) => set({ onDuty }),
+
+      clearRiderData: () =>
+        set({ user: null, location: null, onDuty: false }),
+    }),
+    {
+      name: 'rider-store',
+
+      partialize: (state) => ({
+        user: state.user,
+      }),
+
+      storage: createJSONStorage(() => zustandStorage),
+    }
+  )
 );
