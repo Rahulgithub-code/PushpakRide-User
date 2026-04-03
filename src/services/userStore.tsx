@@ -6,16 +6,15 @@ type CustomLocation = {
   latitude: number;
   longitude: number;
   address: string;
-  heading: number;
 } | null;
 
 export interface UserStoreProps {
   user: any;
   location: CustomLocation;
-  onDuty: boolean;
+  outOfRange: boolean;
   setUser: (user: any) => void;
   setLocation: (location: CustomLocation) => void;
-  setOnDuty: (onDuty: boolean) => void;
+  setOutOfRange: (data: boolean) => void;
   clearUserData: () => void;
 }
 
@@ -24,14 +23,13 @@ export const useUserStore = create<UserStoreProps>()(
     (set) => ({
       user: null,
       location: null,
-      onDuty: false,
-
+      outOfRange: false,
       setUser: (user: any) => set({ user }),
       setLocation: (location: CustomLocation) => set({ location }),
-      setOnDuty: (onDuty: boolean) => set({ onDuty }),
+      setOutOfRange: (outOfRange: boolean) => set({ outOfRange }),
 
       clearUserData: () =>
-        set({ user: null, location: null, onDuty: false }),
+        set({ user: null, location: null, outOfRange: false }),
     }),
     {
       name: 'user-store',

@@ -21,7 +21,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.pushpakride.user",
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAP_API_KEY,
+        googleMapsApiKey: process.env.EXPO_PUBLIC_MAP_API_KEY,
       },
     },
 
@@ -33,7 +33,7 @@ export default {
       },
       config: {
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAP_API_KEY,
+          apiKey: process.env.EXPO_PUBLIC_MAP_API_KEY,
         },
       },
     },

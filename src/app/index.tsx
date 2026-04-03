@@ -35,7 +35,7 @@ const Main = () => {
 
       const currentTime = Date.now() / 1000; // in seconds
 
-      if (decodedRefreshToken?.exp > currentTime) {
+      if (decodedRefreshToken?.exp < currentTime) {
         logout();
         Alert.alert('Your session has expired. Please log in again.');
       }
@@ -50,7 +50,8 @@ const Main = () => {
       if(user){
         resetAndNavigate('/customer/home');
       }else{
-        resetAndNavigate('/rider/home');
+        //resetAndNavigate('/rider/home');
+        resetAndNavigate('/customer/home');
       }
       return;
     }
