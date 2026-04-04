@@ -97,13 +97,15 @@ export const uiStyles = StyleSheet.create({
     adImage: {
         height: '100%',
         width: '100%',
-        resizeMode: 'cover'
+        resizeMode: 'cover',
+        borderRadius: 10
     },
     adSection: {
         width: '100%',
         backgroundColor: '#E5E7EA',
         marginVertical: 10,
-        height: 100
+        height: 100,
+        borderRadius: 10
     },
     banner: {
         width: '100%',
