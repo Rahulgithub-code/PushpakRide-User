@@ -1,0 +1,145 @@
+import { View, TouchableOpacity, FlatList, Image } from 'react-native'
+import React, { useState } from 'react'
+import { useUserStore } from '@/services/userStore'
+import { homeStyles } from '@/styles/homeStyles';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { commonStyles } from '@/styles/commonStyles';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/utils/Constants';
+import CustomText from '@/components/shared/CustomText';
+import { uiStyles } from '@/styles/uiStyles';
+import { getLatLong, getPlacesSuggestions } from '@/utils/mapUtils';
+import LocationInput from '@/components/customer/LocationInput';
+import { locationStyles } from '@/styles/locationStyles';
+import LocationItem from '@/components/customer/LocationItem';
+import MapPickerModel from '@/components/customer/MapPickerModel';
+
+const LocationSelection = () => {
+  const { location, setLocation } = useUserStore();
+
+  const [pickup, setPickup] = useState("");
+  const [pickupCoords, setPickupCoords] = useState<any>(null);
+  const [dropCoords, setDropCoords] = useState<any>(null);
+  const [drop, setDrop] = useState("");
+  const [locations, setLocations] = useState([]);
+  const [focusedInput, setFocusedInput] = useState('drop');
+  const [modalTitle, setModalTitle] = useState('drop');
+  const [isMapModalVisible, setMapModalVisible] = useState(false);
+
+  const fetchLocation = async (query: string) => {
+
+    if (query?.length > 4) {
+      console.log("query ---- " + query);
+      const data = await getPlacesSuggestions(query);
+      console.log("data ---- " + JSON.stringify(data));
+      setLocations(data);
+    }
+  }
+
+  const addLocation = async (id: string) => {
+    const data = await getLatLong(id);
+    if (data) {
+      if (focusedInput === 'drop') {
+        setDrop(data?.address);
+        setDropCoords(data);
+      } else {
+        setLocation(data);
+        setPickupCoords(data);
+        setPickup(data?.address);
+      }
+    }
+  }
+
+  const renderLocation = ({ item }: any) => {
+    return (
+      <LocationItem item={item} onPress={() => addLocation(item?.place_id)} />
+    )
+  }
+
+  return (
+    <View style={homeStyles.container}>
+      <StatusBar style='light' backgroundColor='orange' translucent={false} />
+      <SafeAreaView />
+      <TouchableOpacity style={commonStyles.flexRow} onPress={router.back}>
+        <Ionicons name='chevron-back' size={24} color={Colors.iosColor} />
+        <CustomText fontFamily='Regular' style={{ color: Colors.iosColor }}>
+          Back
+        </CustomText>
+      </TouchableOpacity>
+      <View style={uiStyles.locationInputs}>
+        <LocationInput
+          placeholder='Search Pickup Location'
+          type='pickup'
+          value={pickup}
+          onChangeText={(text) => {
+            setPickup(text);
+            fetchLocation(text);
+          }}
+          onFocus={() => setFocusedInput('pickup')}
+        />
+
+        <LocationInput
+          placeholder='Search Drop Location'
+          type='drop'
+          value={drop}
+          onChangeText={(text) => {
+            setDrop(text);
+            fetchLocation(text);
+          }}
+          onFocus={() => setFocusedInput('drop')}
+        />
+        <CustomText fontFamily='Medium' fontSize={10} style={uiStyles.suggestionText}>
+          {focusedInput} suggestions
+        </CustomText>
+      </View>
+
+      <FlatList data={locations}
+        renderItem={renderLocation}
+        keyExtractor={(item: any) => item?.place_id}
+        initialNumToRender={5}
+        windowSize={5}
+        ListFooterComponent={
+          <TouchableOpacity
+            style={[commonStyles.flexRow, locationStyles.container]}
+            onPress={() => {
+              setModalTitle(focusedInput);
+              setMapModalVisible(true);
+            }}>
+            <Image source={require("@/assets/icons/map_pin.png")} style={uiStyles.mapPinIcon} />
+            <CustomText fontFamily='Medium' fontSize={12}>
+              Select from Map
+            </CustomText>
+
+          </TouchableOpacity>
+        } />
+      {isMapModalVisible && (
+        <MapPickerModel
+          selectedLocation={{
+            latitude: focusedInput === 'drop' ? dropCoords?.latitude : pickupCoords?.latitude,
+            longitude: focusedInput === 'drop' ? dropCoords?.longitude : pickupCoords?.longitude,
+            address: focusedInput === 'drop' ? drop : pickup
+          }}
+          title={modalTitle}
+          visible={isMapModalVisible}
+          onClose={() => setMapModalVisible(false)}
+          onSelectLocation={(data) => {
+            if (data) {
+              if (modalTitle === 'drop') {
+                setDropCoords(data);
+                setDrop(data?.address);
+              } else {
+                setLocation(data);
+                setPickupCoords(data);
+                setPickup(data?.address);
+              }
+            }
+          }}
+        />
+      )}
+    </View>
+  )
+}
+
+export default LocationSelection

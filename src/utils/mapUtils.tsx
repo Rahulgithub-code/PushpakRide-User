@@ -1,5 +1,5 @@
-import { useUserStore } from "@/store/userStore";
 import axios from "axios";
+import { useUserStore } from "@/services/userStore";
 
 export const getLatLong = async (placeId: string) => {
     try {
@@ -36,7 +36,7 @@ export const reverseGeocode = async (latitude: number, longitude: number) => {
             const address = response.data.results[0].formatted_address;
             return address
         } else {
-            console.log('Geocoding failed: ', response.data.status);
+            console.log('Geocoding failed: ', response.data);
             return ""
         }
     } catch (error) {
