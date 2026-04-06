@@ -2,8 +2,6 @@ import LiveTracingSheet from '@/components/customer/LiveTracingSheet';
 import LiveTrackingMap from '@/components/customer/LiveTrackingMap';
 import SearchingRideSheet from '@/components/customer/SearchingRideSheet';
 import CustomText from '@/components/shared/CustomText';
-import { logout } from '@/services/authService';
-import { useUserStore } from '@/services/userStore';
 import { useWS } from '@/services/WSProvider';
 import { rideStyles } from '@/styles/rideStyles';
 import { screenHeight } from '@/utils/Constants';
@@ -37,10 +35,8 @@ const LiveRide = () => {
 
   useEffect(()=>{
     if(id){
-      console.log("LiveRide : id - " + id);
       emit("subscribeRide", id);
       on("rideData", (data)=>{
-        console.log("LiveRide : rideData - " + JSON.stringify(data));
         setRideData(data);
         if(data?.status === 'SEARCHING_FOR_RIDER'){
           emit("searchrider", id);
@@ -51,7 +47,7 @@ const LiveRide = () => {
         setRideData(data);
       })
 
-      on("rideCenceled", (error)=>{
+      on("rideCanceled", (error)=>{
         resetAndNavigate("/customer/home");
         Alert.alert("Ride Canceled");
       });

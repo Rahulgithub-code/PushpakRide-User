@@ -64,7 +64,7 @@ const SearchingRideSheet: FC<{ item: RideItem }> = ({ item }) => {
                 </View>
             </View>
             <View style={rideStyles?.bottomButtonContainer}>
-                <TouchableOpacity style={rideStyles.cancelButton} onPress={()=>{emit("cancleRide", item?._id)}}>
+                <TouchableOpacity style={rideStyles.cancelButton} onPress={()=>{emit("cancelRide", item?._id)}}>
                     <CustomText style={rideStyles?.cancelButtonText}>Cancel</CustomText>
                 </TouchableOpacity>
                 <TouchableOpacity style={rideStyles.backButton2} onPress={()=>{router.back()}}>
