@@ -50,8 +50,8 @@ const Main = () => {
       if(user){
         resetAndNavigate('/customer/home');
       }else{
-        //resetAndNavigate('/rider/home');
-        resetAndNavigate('/customer/home');
+        resetAndNavigate('/rider/home');
+        logout();
       }
       return;
     }

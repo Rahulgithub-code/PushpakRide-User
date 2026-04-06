@@ -6,14 +6,13 @@ import { rideStyles } from '@/styles/rideStyles';
 import { StatusBar } from 'expo-status-bar';
 import { calculateFare } from '@/utils/mapUtils';
 import RoutesMap from '@/components/customer/RoutesMap';
-import { riderStyles } from '@/styles/riderStyles';
 import CustomText from '@/components/shared/CustomText';
 import { router } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { commonStyles } from '@/styles/commonStyles';
 import CustomButton from '@/components/shared/CustomButton';
-import { opacity } from 'react-native-reanimated/lib/typescript/Colors';
+import { createRide } from '@/services/rideService';
 
 const RideBooking = () => {
   const route = useRoute() as any;
@@ -67,6 +66,23 @@ const RideBooking = () => {
 
   const handleRideBooking = async () => {
     setLoading(true);
+
+    await createRide({
+      vehicle: 
+        selectedOption === "Cab Economy" ? "cabEconamy"
+        : selectedOption === "Cab Premium" ? "cabPremium"
+        : selectedOption === "Bike" ? "bike" : "auto",
+        drop:{
+          latitude: parseFloat(item.drop_latitude),
+          longitude: parseFloat(item.drop_longitude),
+          address: item?.drop_address
+        },
+        pickup:{
+          latitude: parseFloat(location.latitude),
+          longitude: parseFloat(location.longitude),
+          address: location.address
+        }
+    });
     setLoading(false);
   }
 

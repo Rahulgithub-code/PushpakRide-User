@@ -1,54 +1,56 @@
 import { mapStyles } from '@/styles/mapStyles';
+import { Colors } from '@/utils/Constants';
 import { customMapStyle, indiaIntialRegion } from '@/utils/CustomMap';
+import { getPoints } from '@/utils/mapUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { FC, memo, useEffect, useRef } from 'react'
+import React, { FC, memo, useEffect, useRef, useState } from 'react'
 import { Image, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import { RFValue } from 'react-native-responsive-fontsize';
-import MapViewDirections from 'react-native-maps-directions'
 
 const apiKey = process.env.EXPO_PUBLIC_MAP_API_KEY || "";
 
-const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
+const LiveTrackingMap: FC<{
+    height: number, drop: any, pickup: any, rider: any, status: string
+}> = ({ height, drop, pickup, rider, status }) => {
     const mapRef = useRef<MapView>(null);
-    const fitToMarkers = async () => {
-        const coordinates = [];
-        if (pickup?.latitude && pickup?.longitude) {
-            coordinates.push({
-                latitude: pickup?.latitude,
-                longitude: pickup?.longitude
-            })
-        }
-        if (drop?.latitude && drop?.longitude) {
-            coordinates.push({
-                latitude: drop?.latitude,
-                longitude: drop?.longitude
-            })
-        }
-        if (coordinates.length === 0) return;
+    const [isUserInteracting, setIsUserInteracting] = useState(false);
 
+    const fitToMarkers = async () => {
+        if (isUserInteracting) return;
+
+        const coordinates = [];
+
+        if (pickup?.latitude && pickup?.longitude && status === 'START') {
+            coordinates.push({
+                latitude: pickup.latitude,
+                longitude: pickup.longitude
+            });
+        }
+        if (drop?.latitude && drop?.longitude && status === 'ARRIVED') {
+            coordinates.push({
+                latitude: drop.latitude,
+                longitude: drop.longitude
+            });
+        }
+        if (rider?.latitude && rider?.longitude) {
+            coordinates.push({
+                latitude: rider.latitude,
+                longitude: rider.longitude
+            });
+        }
+
+        if (coordinates.length === 0) return;
         try {
             mapRef.current?.fitToCoordinates(coordinates, {
-                edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                edgePadding: { top: 50, right: 50, left: 50, bottom: 50 },
                 animated: true
             })
         } catch (error) {
-            console.error("Error in fitToMarker", error);
+            console.error("Error fitting to markera:", error);
         }
     };
-
-    const fitToMarkersWithDelay = () => {
-        setTimeout(() => {
-            fitToMarkers();
-        }, 500);
-    };
-
-    useEffect(() => {
-        if (drop?.latitude && pickup?.latitude && mapRef) {
-            fitToMarkersWithDelay();
-        }
-    }, [drop?.latitude, pickup?.latitude, mapRef]);
-
     const calculateInitialRegion = () => {
         if (drop?.latitude && pickup?.latitude) {
             const latitude = (pickup?.latitude + drop?.latitude) / 2;
@@ -59,8 +61,11 @@ const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
         return indiaIntialRegion;
     }
 
+    useEffect(() => {
+        if (pickup?.latitude && drop?.latitude) fitToMarkers();
+    }, [drop?.latitude, pickup?.latitude, rider.latitude]);
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ height: height, width: "100%" }}>
             <MapView
                 ref={mapRef}
                 followsUserLocation
@@ -72,18 +77,20 @@ const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
                 showsIndoors={false}
                 customMapStyle={customMapStyle}
                 showsUserLocation={true}
+                onRegionChange={() => setIsUserInteracting(true)}
+                onRegionChangeComplete={() => setIsUserInteracting(false)}
             >
-                {pickup?.latitude && drop?.latitude && (
+                {rider?.latitude && pickup?.latitude && (
                     <MapViewDirections
-                        origin={pickup}
-                        destination={drop}
+                        origin={rider}
+                        destination={status === "START" ? pickup : drop}
+                        onReady={fitToMarkers}
                         apikey={apiKey}
+                        strokeColor={Colors.iosColor}
+                        strokeColors={[Colors.iosColor]}
                         strokeWidth={5}
                         precision='high'
-                        onReady={() => fitToMarkersWithDelay()}
-                        strokeColor="black"
-                        strokeColors={["black"]}
-                        onError={(err) => console.error("Directions error", err)}
+                        onError={(error) => console.log("Direction error: ", error)}
                     />
                 )}
 
@@ -97,7 +104,6 @@ const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
                         />
                     </Marker>
                 )}
-
                 {pickup?.latitude && (
                     <Marker coordinate={{ latitude: pickup.latitude, longitude: pickup.longitude }}
                         anchor={{ x: 0.5, y: 1 }}
@@ -108,7 +114,27 @@ const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
                         />
                     </Marker>
                 )}
-
+                {rider?.latitude && (
+                    <Marker coordinate={{ latitude: rider.latitude, longitude: rider.longitude }}
+                        anchor={{ x: 0.5, y: 1 }}
+                        zIndex={3}>
+                        <View style={{transform: [{rotate: `${rider?.heading}deg`}]}}>
+                            <Image
+                            source={require("@/assets/icons/cab_marker.png")}
+                            style={{ height: 30, width: 30, resizeMode: 'contain' }}
+                        />
+                        </View>
+                    </Marker>
+                )}
+                {drop && pickup && (
+                    <Polyline 
+                    coordinates={getPoints([drop, pickup])}
+                    strokeColor={Colors.text}
+                    strokeWidth={2}
+                    geodesic={true}
+                    lineDashPattern={[12,10]}
+                    />
+                )}
             </MapView>
             <TouchableOpacity
                 style={mapStyles.gpsButton}
@@ -120,4 +146,4 @@ const RoutesMap: FC<{ drop: any; pickup: any }> = ({ drop, pickup }) => {
     )
 }
 
-export default memo(RoutesMap);
+export default memo(LiveTrackingMap);

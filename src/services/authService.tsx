@@ -7,28 +7,29 @@ import axios from "axios";
 import { BASE_URL } from "./config";
 
 export const signin = async (
-    payload:{
+    payload: {
         role: "customer" | "rider";
         phone: string
     },
     updateAccessToken: () => void
-)=>{
-    const {setUser} = useUserStore.getState();
-    const {setUser: setRiderUser} = useRiderStore.getState();
+) => {
+    console.log("signin called");
+    const { setAuth, setUser } = useUserStore.getState();
+    const { setUser: setRiderUser } = useRiderStore.getState();
 
     try {
         const res = await axios.post(`${BASE_URL}/auth/signin`, payload);
-        if(res.data.user.role === 'customer'){
+        if (res.data.user.role === 'customer') {
             setUser(res.data.user);
-        } else{
+        } else {
             setRiderUser(res.data.user);
         }
-        zustandStorage.setItem('refresh_token', res.data.refresh_token); 
-        zustandStorage.setItem('access_token', res.data.access_token);
 
-        if(res.data.user.role === 'customer'){
+        setAuth(res.data.access_token, res.data.refresh_token);
+
+        if (res.data.user.role === 'customer') {
             resetAndNavigate('/customer/home');
-        } else{
+        } else {
             resetAndNavigate('/rider/home');
         }
         updateAccessToken();
@@ -44,8 +45,8 @@ export const logout = async (disconnect?: () => void) => {
     if (disconnect) {
         disconnect();
     }
-    const {clearUserData} = useUserStore.getState();
-    const {clearRiderData} = useRiderStore.getState();
+    const { clearUserData } = useUserStore.getState();
+    const { clearRiderData } = useRiderStore.getState();
 
     zustandStorage.clearAll();
     clearUserData();

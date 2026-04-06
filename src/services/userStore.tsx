@@ -12,9 +12,12 @@ export interface UserStoreProps {
   user: any;
   location: CustomLocation;
   outOfRange: boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
   setUser: (user: any) => void;
   setLocation: (location: CustomLocation) => void;
   setOutOfRange: (data: boolean) => void;
+  setAuth: (access: string, refresh: string) => void;
   clearUserData: () => void;
 }
 
@@ -24,21 +27,28 @@ export const useUserStore = create<UserStoreProps>()(
       user: null,
       location: null,
       outOfRange: false,
-      setUser: (user: any) => set({ user }),
-      setLocation: (location: CustomLocation) => set({ location }),
-      setOutOfRange: (outOfRange: boolean) => set({ outOfRange }),
+      accessToken: null,
+      refreshToken: null,
+
+      setUser: (user) => set({ user }),
+      setLocation: (location) => set({ location }),
+      setOutOfRange: (outOfRange) => set({ outOfRange }),
+
+      setAuth: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken }),
 
       clearUserData: () =>
-        set({ user: null, location: null, outOfRange: false }),
+        set({
+          user: null,
+          location: null,
+          outOfRange: false,
+          accessToken: null,
+          refreshToken: null,
+        }),
     }),
     {
       name: 'user-store',
-
-      partialize: (state) => ({
-        user: state.user,
-      }),
-
-      storage: createJSONStorage(() => zustandStorage)
+      storage: createJSONStorage(() => zustandStorage),
     }
   )
 );
