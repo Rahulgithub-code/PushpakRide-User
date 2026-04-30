@@ -1,5 +1,4 @@
 import CustomText from '@/components/shared/CustomText';
-import { zustandStorage } from '@/services/storage';
 import { useUserStore } from '@/services/userStore';
 import { commonStyles } from '@/styles/commonStyles';
 import { splashStyles } from '@/styles/splashStyles';
@@ -10,6 +9,7 @@ import {jwtDecode} from 'jwt-decode';
 import { resetAndNavigate } from '@/utils/Helpers';
 import { refreshAccessToken } from '@/services/apiInterceptors';
 import { logout } from '@/services/authService';
+import { useRiderStore } from '@/services/riderStore';
 
 interface DecodedToken {
   exp: number;
@@ -27,8 +27,12 @@ const Main = () => {
   const [hasNavigated, setHasNavigated] = useState(false);
 
   const tokenCheck = async () => {
-    const accessToken = await zustandStorage.getItem('access_token') as string;
-    const refreshToken = await zustandStorage.getItem('refresh_token') as string;
+    const accessToken = useUserStore.getState().access_token || useRiderStore.getState().access_token as string;
+    const refreshToken = useUserStore.getState().refresh_token || useRiderStore.getState().refresh_token as string;
+
+    console.log("accessToken --- "+ accessToken);
+    console.log("refreshToken --- "+ accessToken);
+    
     if (accessToken) {
       const decodedAccessToken = jwtDecode<DecodedToken>(accessToken);
       const decodedRefreshToken = jwtDecode<DecodedToken>(refreshToken);
@@ -50,8 +54,7 @@ const Main = () => {
       if(user){
         resetAndNavigate('/customer/home');
       }else{
-        //resetAndNavigate('/rider/home');
-        resetAndNavigate('/customer/home');
+        resetAndNavigate('/rider/home');
       }
       return;
     }

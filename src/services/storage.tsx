@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const KEYS = ['rider-store', 'user-store', 'auth_token'];
+const KEYS = ['rider-store', 'user-store'];
 
 export const zustandStorage = {
   getItem: async (name: string) => {
@@ -19,4 +19,11 @@ export const zustandStorage = {
   clearAll: async () => {
     await Promise.all(KEYS.map((key) => SecureStore.deleteItemAsync(key)));
   },
+
+  getAllItems : async () =>{
+    for (const key of KEYS) {
+          const value = await zustandStorage.getItem(key);
+          console.log(`📦 ${key}:`, value);
+      }
+  }
 };
