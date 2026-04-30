@@ -77,14 +77,9 @@ const LiveTracingSheet: FC<{ item: RideItem }> = ({ item }) => {
                 <TouchableOpacity style={rideStyles.cancelButton} onPress={()=>{emit("cancleRide", item?._id)}}>
                     <CustomText style={rideStyles.cancelButtonText}>Cancel</CustomText>
                 </TouchableOpacity>
-                <TouchableOpacity
-                style={rideStyles.backButton2}
-                onPress={()=>{
-                    if(item?.status === "COMPLETED"){
-                        resetAndNavigate("/customer/home");
-                    }
-                }}
-                >Back</TouchableOpacity>
+                <TouchableOpacity style={rideStyles.backButton2} onPress={()=>{if(item?.status === "COMPLETED"){resetAndNavigate("/customer/home")}}}>
+                    <CustomText style={rideStyles.cancelButtonText}>Back</CustomText>
+                </TouchableOpacity>
             </View>
         </View>
     )

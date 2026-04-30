@@ -3,8 +3,10 @@ import { io, Socket } from "socket.io-client";
 import { zustandStorage } from "./storage";
 import { SOCKET_URL } from "./config";
 import { refreshAccessToken } from "./apiInterceptors";
+import { useUserStore } from "./userStore";
+import { useRiderStore } from "./riderStore";
 
-const ACCESS_TOKEN_KEY = "access_token"; // ✅ keep consistent
+const ACCESS_TOKEN_KEY = "access_token";
 
 interface WSService {
     emit: (event: string, data: any) => void;
@@ -22,27 +24,29 @@ export const WSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     const [socketAccessToken, setSocketAccessToken] = useState<string | null>(null);
     const socket = useRef<Socket | null>(null);
 
-    // 🔹 Load token on mount (ASYNC FIXED)
+    // 🔥 QUEUE (critical fix)
+    const messageQueue = useRef<{ event: string; data: any }[]>([]);
+    const isRefreshing = useRef(false);
+
+    // 🔹 Load token
     useEffect(() => {
+        console.log("Load Token");
         const loadToken = async () => {
-            try {
-                const token = await zustandStorage.getItem(ACCESS_TOKEN_KEY);
-                if (token) {
-                    console.log("🔑 Token loaded");
-                    setSocketAccessToken(token);
-                } else {
-                    console.log("❌ No token found");
-                }
-            } catch (err) {
-                console.log("❌ Error loading token:", err);
+            const token = useUserStore.getState().access_token || useRiderStore.getState().access_token;
+            if (token) {
+                console.log("🔑 Token loaded");
+                setSocketAccessToken(token);
+            } else {
+                console.log("❌ No token found");
             }
         };
-
         loadToken();
     }, []);
 
-    // 🔹 Initialize socket when token changes
+    // 🔹 Socket init
     useEffect(() => {
+        console.log("WSProvider : Socket init");
+        
         if (!socketAccessToken) {
             console.log("❌ No token, skipping socket init");
             return;
@@ -51,54 +55,67 @@ export const WSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         console.log("🚀 Initializing socket...");
         console.log("🌐 URL:", SOCKET_URL);
 
-        // cleanup old socket
+        // cleanup
         if (socket.current) {
             socket.current.removeAllListeners();
             socket.current.disconnect();
         }
 
-        // create new socket
         socket.current = io(SOCKET_URL, {
             withCredentials: true,
             auth: {
                 token: socketAccessToken,
             },
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
         });
 
         socket.current.connect();
 
-        // ✅ connected
+        // ✅ CONNECT
         socket.current.on("connect", () => {
-            console.log("✅ Socket connected:", socket.current?.id);
+            console.log("✅ Connected:", socket.current?.id);
+
+            // 🔥 FLUSH QUEUE
+            console.log("🚀 Flushing queue:", messageQueue.current.length);
+
+            while (messageQueue.current.length > 0) {
+                const msg = messageQueue.current.shift();
+                if (msg) {
+                    console.log("📤 Flushed:", msg.event);
+                    socket.current?.emit(msg.event, msg.data);
+                }
+            }
         });
 
-        // ❌ disconnected
+        // ❌ DISCONNECT
         socket.current.on("disconnect", (reason) => {
-            console.log("❌ Socket disconnected:", reason);
+            console.log("❌ Disconnected:", reason);
         });
 
-        // 🚨 errors (auth, network, etc.)
+        // 🚨 ERROR
         socket.current.on("connect_error", async (err) => {
             console.log("🚨 Socket error:", err.message);
-            console.log("FULL ERROR:", err);
 
-            // 🔥 handle auth error
-            if (err.message?.toLowerCase().includes("auth")) {
+            if (err.message.toLowerCase().includes("auth") && !isRefreshing.current) {
+                isRefreshing.current = true;
+
                 console.log("🔄 Refreshing token...");
 
                 try {
                     await refreshAccessToken();
 
-                    const newToken = await zustandStorage.getItem(ACCESS_TOKEN_KEY);
+                    const newToken = useUserStore.getState().access_token || useRiderStore.getState().access_token;
                     if (newToken) {
                         console.log("✅ Token refreshed");
-                        setSocketAccessToken(newToken); // 🔥 triggers reconnect
-                    } else {
-                        console.log("❌ No new token after refresh");
+                        setSocketAccessToken(newToken);
                     }
                 } catch (e) {
-                    console.log("❌ Token refresh failed:", e);
+                    console.log("❌ Token refresh failed");
                 }
+
+                isRefreshing.current = false;
             }
         });
 
@@ -106,46 +123,46 @@ export const WSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
             socket.current?.removeAllListeners();
             socket.current?.disconnect();
         };
+
     }, [socketAccessToken]);
 
-    // 🔹 Emit event safely
+    // 🔥 SAFE EMIT (QUEUE BASED)
     const emit = (event: string, data: any) => {
-        if (socket.current?.connected) {
+        console.log("WSProvide: event - " + event +", data - " +JSON.stringify(data));
+        if (!socket.current) return;
+
+        if (socket.current.connected) {
+            console.log("📤 Emit:", event);
             socket.current.emit(event, data);
         } else {
-            console.warn("⚠️ Cannot emit, socket not connected");
+            console.warn("⚠️ Queuing event:", event);
+            messageQueue.current.push({ event, data });
         }
     };
 
-    // 🔹 Listen
     const on = (event: string, callback: (data: any) => void) => {
         socket.current?.on(event, callback);
     };
 
-    // 🔹 Remove specific listener
     const off = (event: string, callback: (data: any) => void) => {
         socket.current?.off(event, callback);
     };
 
-    // 🔹 Remove all listeners
     const removeListeners = (event: string) => {
         socket.current?.removeAllListeners(event);
     };
 
-    // 🔹 Manually update token
     const updateAccessToken = async () => {
-        const token = await zustandStorage.getItem(ACCESS_TOKEN_KEY);
+        const token = useUserStore.getState().access_token || useRiderStore.getState().access_token;
         if (token) {
             setSocketAccessToken(token);
         }
     };
 
-    // 🔹 Disconnect
     const disconnect = () => {
         socket.current?.disconnect();
     };
 
-    // 🔹 Check connection
     const isConnected = () => {
         return socket.current?.connected ?? false;
     };

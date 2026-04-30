@@ -12,8 +12,8 @@ export interface UserStoreProps {
   user: any;
   location: CustomLocation;
   outOfRange: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
+  access_token: string | null;
+  refresh_token: string | null;
   setUser: (user: any) => void;
   setLocation: (location: CustomLocation) => void;
   setOutOfRange: (data: boolean) => void;
@@ -27,23 +27,23 @@ export const useUserStore = create<UserStoreProps>()(
       user: null,
       location: null,
       outOfRange: false,
-      accessToken: null,
-      refreshToken: null,
+      access_token: null,
+      refresh_token: null,
 
       setUser: (user) => set({ user }),
       setLocation: (location) => set({ location }),
       setOutOfRange: (outOfRange) => set({ outOfRange }),
 
-      setAuth: (accessToken, refreshToken) =>
-        set({ accessToken, refreshToken }),
+      setAuth: (access_token, refresh_token) =>
+        set({ access_token, refresh_token }),
 
       clearUserData: () =>
         set({
           user: null,
           location: null,
           outOfRange: false,
-          accessToken: null,
-          refreshToken: null,
+          access_token: null,
+          refresh_token: null,
         }),
     }),
     {

@@ -82,7 +82,7 @@ const RideBooking = () => {
           longitude: parseFloat(location.longitude),
           address: location.address
         }
-    });
+    }, 'customer');
     setLoading(false);
   }
 

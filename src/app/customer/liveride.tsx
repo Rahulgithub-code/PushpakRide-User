@@ -16,7 +16,7 @@ const androidHeights = [screenHeight * 0.12, screenHeight * 0.42];
 const iosHeights = [screenHeight * 0.2, screenHeight * 0.5];
 
 const LiveRide = () => {
-  const {emit, on, off} = useWS();
+  const {emit, on, off, isConnected} = useWS();
   const [rideData, setRideData]  = useState<any>(null);
   const [riderCoords, setRiderCoords]  = useState<any>(null);
   const route = useRoute() as any;
@@ -33,7 +33,9 @@ const LiveRide = () => {
     setMapHeight(height);
   },[]);
 
-  useEffect(()=>{
+
+const callWebSocket = () =>{
+    setTimeout(() => {
     if(id){
       emit("subscribeRide", id);
       on("rideData", (data)=>{
@@ -64,8 +66,12 @@ const LiveRide = () => {
       off('rideCanceled',()=>{});
       off('error',()=>{});
     }
+  }, 500);
+}
 
-  },[id, on, off, emit]);
+  useEffect(()=>{
+    callWebSocket()
+  }, [id, on, off, emit, isConnected])
 
   useEffect(()=>{
     if(rideData?.rider?._id){

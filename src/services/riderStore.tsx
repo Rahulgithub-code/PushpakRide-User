@@ -13,9 +13,12 @@ export interface RiderStoreProps {
   user: any;
   location: CustomLocation;
   onDuty: boolean;
+  access_token: string | null;
+  refresh_token: string | null;
   setUser: (user: any) => void;
   setLocation: (location: CustomLocation) => void;
   setOnDuty: (onDuty: boolean) => void;
+  setAuth: (access: string, refresh: string) => void;
   clearRiderData: () => void;
 }
 
@@ -25,21 +28,21 @@ export const useRiderStore = create<RiderStoreProps>()(
       user: null,
       location: null,
       onDuty: false,
+      access_token: null,
+      refresh_token: null,
 
       setUser: (user: any) => set({ user }),
       setLocation: (location: CustomLocation) => set({ location }),
       setOnDuty: (onDuty: boolean) => set({ onDuty }),
 
+      setAuth: (access_token, refresh_token) =>
+        set({ access_token, refresh_token }),
       clearRiderData: () =>
-        set({ user: null, location: null, onDuty: false }),
+        set({ user: null, location: null, onDuty: false, access_token: null,
+          refresh_token: null}),
     }),
     {
       name: 'rider-store',
-
-      partialize: (state) => ({
-        user: state.user,
-      }),
-
       storage: createJSONStorage(() => zustandStorage),
     }
   )

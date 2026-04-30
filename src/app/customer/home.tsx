@@ -7,7 +7,7 @@ import { screenHeight } from '@/utils/Constants'
 import DraggableMap from '@/components/customer/DraggableMap'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import SheetContent from '@/components/customer/SheetContent'
-import { getMyRides } from '@/services/rideService'
+import { zustandStorage } from '@/services/storage'
 
 const androidHeight = [screenHeight * 0.12, screenHeight * 0.42, screenHeight * 0.8];
 const iosHeight = [screenHeight * 0.2, screenHeight * 0.5, screenHeight * 0.8];
@@ -28,10 +28,7 @@ const CustomerHome = () => {
     }
     setMapHeight(height);
   }, []);
-
-  useEffect(()=>{
-    getMyRides();
-  },[])
+  
   return (
     <View style={homeStyles.container}>
       <StatusBar style='light' backgroundColor='orange' translucent={false} />

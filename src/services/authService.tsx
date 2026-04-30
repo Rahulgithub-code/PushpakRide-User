@@ -15,17 +15,19 @@ export const signin = async (
 ) => {
     console.log("signin called");
     const { setAuth, setUser } = useUserStore.getState();
-    const { setUser: setRiderUser } = useRiderStore.getState();
+    const { setUser: setRiderUser, setAuth: setRiderAuth } = useRiderStore.getState();
 
     try {
         const res = await axios.post(`${BASE_URL}/auth/signin`, payload);
         if (res.data.user.role === 'customer') {
             setUser(res.data.user);
+            setAuth(res.data.access_token, res.data.refresh_token);
+            console.log("Setting Customer auth info");
         } else {
             setRiderUser(res.data.user);
+            setRiderAuth(res.data.access_token, res.data.refresh_token);
+            console.log("Setting Rider auth info");
         }
-
-        setAuth(res.data.access_token, res.data.refresh_token);
 
         if (res.data.user.role === 'customer') {
             resetAndNavigate('/customer/home');

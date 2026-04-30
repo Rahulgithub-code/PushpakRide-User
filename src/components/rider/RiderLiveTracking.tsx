@@ -1,19 +1,20 @@
 import { mapStyles } from '@/styles/mapStyles';
-import { Colors } from '@/utils/Constants';
 import { customMapStyle, indiaIntialRegion } from '@/utils/CustomMap';
-import { getPoints } from '@/utils/mapUtils';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { FC, memo, useEffect, useRef, useState } from 'react'
 import { Image, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
+import CustomText from '../shared/CustomText';
+import { FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
+import MapViewDirections from 'react-native-maps-directions';
+import { Colors } from '@/utils/Constants';
+import { getPoints } from '@/utils/mapUtils';
 
 const apiKey = process.env.EXPO_PUBLIC_MAP_API_KEY || "";
 
-const LiveTrackingMap: FC<{
-    height: number, drop: any, pickup: any, rider: any, status: string
-}> = ({ height, drop, pickup, rider, status }) => {
+const RiderLiveTracking: FC<{
+    drop: any, pickup: any, rider: any, status: string
+}> = ({ drop, pickup, rider, status }) => {
     const mapRef = useRef<MapView>(null);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
 
@@ -51,6 +52,13 @@ const LiveTrackingMap: FC<{
             console.error("Error fitting to markers:", error);
         }
     };
+
+    const firToMarkerWithDelay = () => {
+        setTimeout(() => {
+            fitToMarkers()
+        }, 500);
+    }
+
     const calculateInitialRegion = () => {
         if (drop?.latitude && pickup?.latitude) {
             const latitude = (pickup?.latitude + drop?.latitude) / 2;
@@ -65,7 +73,7 @@ const LiveTrackingMap: FC<{
         if (pickup?.latitude && drop?.latitude) fitToMarkers();
     }, [drop?.latitude, pickup?.latitude, rider.latitude]);
     return (
-        <View style={{ height: height, width: "100%" }}>
+        <View style={{ flex: 1 }}>
             <MapView
                 ref={mapRef}
                 followsUserLocation
@@ -82,9 +90,9 @@ const LiveTrackingMap: FC<{
             >
                 {rider?.latitude && pickup?.latitude && (
                     <MapViewDirections
-                        origin={rider}
-                        destination={status === "START" ? pickup : drop}
-                        onReady={fitToMarkers}
+                        origin={status === "START" ? pickup : drop}
+                        destination={status === "START" ? rider : drop}
+                        onReady={firToMarkerWithDelay}
                         apikey={apiKey}
                         strokeColor={Colors.iosColor}
                         strokeColors={[Colors.iosColor]}
@@ -118,32 +126,33 @@ const LiveTrackingMap: FC<{
                     <Marker coordinate={{ latitude: rider.latitude, longitude: rider.longitude }}
                         anchor={{ x: 0.5, y: 1 }}
                         zIndex={3}>
-                        <View style={{transform: [{rotate: `${rider?.heading}deg`}]}}>
+                        <View style={{ transform: [{ rotate: `${rider?.heading}deg` }] }}>
                             <Image
-                            source={require("@/assets/icons/cab_marker.png")}
-                            style={{ height: 30, width: 30, resizeMode: 'contain' }}
-                        />
+                                source={require("@/assets/icons/cab_marker.png")}
+                                style={{ height: 30, width: 30, resizeMode: 'contain' }}
+                            />
                         </View>
                     </Marker>
                 )}
                 {drop && pickup && (
-                    <Polyline 
-                    coordinates={getPoints([drop, pickup])}
-                    strokeColor={Colors.text}
-                    strokeWidth={2}
-                    geodesic={true}
-                    lineDashPattern={[12,10]}
+                    <Polyline
+                        coordinates={getPoints([drop, pickup])}
+                        strokeColor={Colors.text}
+                        strokeWidth={2}
+                        geodesic={true}
+                        lineDashPattern={[12, 10]}
                     />
                 )}
             </MapView>
-            <TouchableOpacity
-                style={mapStyles.gpsButton}
-                onPress={fitToMarkers}>
-                <MaterialCommunityIcons name='crosshairs-gps'
-                    size={RFValue(16)} color="#3C75BE" />
+            <TouchableOpacity style={mapStyles.gpsLiveButton} onPress={() => { }}>
+                <CustomText fontFamily='SemiBold' fontSize={10}>Open Live GPS</CustomText>
+                <FontAwesome6 name="location-arrow" size={RFValue(12)} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity style={mapStyles.gpsButton} onPress={fitToMarkers}>
+                <MaterialCommunityIcons name='crosshairs-gps' size={RFValue(16)} color="#3C75BE" />
             </TouchableOpacity>
         </View>
     )
 }
 
-export default memo(LiveTrackingMap);
+export default memo(RiderLiveTracking)
